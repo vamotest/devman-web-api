@@ -24,5 +24,10 @@ user:
 ```
 * Запустите тесты:
 ```shell script
-~ python3 -m pytest test_parser.py -v --html=report.html
+~ python3 -m pytest test_script.py [--verbose] --html=report.html
+```
+* Arguments:
+```sh
+[--verbose]: increase verbosity
+[--html]: generate a HTML report for the test results
 ```
