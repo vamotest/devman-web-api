@@ -130,3 +130,11 @@ dmypy.json
 
 # Configuration
 configuration.yml
+*.yml
+
+# Reports
+/assets/
+/report.html
+/report/
+
+
