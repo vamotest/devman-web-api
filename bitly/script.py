@@ -1,41 +1,29 @@
-import json
 import requests
 import yaml
 
 
-conf = yaml.safe_load(open('configuration.yml'))
-token = conf['user']['token']
+def return_token():
+    conf = yaml.safe_load(open('configuration.yml'))
+    token = conf['user']['token']
+
+    return token
 
 
-def get_user_info():
-    url = f'https://api-ssl.bitly.com/v4/user'
+def return_bitly(user_input):
+    if user_input.startswith('https', 0, 5):
+        is_bitly = user_input.startswith("bit.ly", 8, 14)
+        bitlink = user_input[8:]
+    elif user_input.startswith('http', 0, 4):
+        is_bitly = user_input.startswith("bit.ly", 7, 13)
+        bitlink = user_input[7:]
+    else:
+        is_bitly = user_input.startswith("bit.ly")
+        bitlink = user_input
 
-    headers = {
-        'Authorization': token
-    }
-
-    response = requests.get(url, headers=headers).json()
-    return response
-
-
-def expand_link(link):
-    url = f'https://api-ssl.bitly.com/v4/expand'
-
-    headers = {
-        'Authorization': token,
-        'Content-Type': 'application/json'
-    }
-
-    payload = {
-        'bitlink_id': link
-    }
-
-    payload = json.dumps(payload)
-    response = requests.post(url, headers=headers, data=payload).json()
-    return response
+    return bitlink, is_bitly
 
 
-def shorten_link(link):
+def shorten_link(link, token):
     url = f'https://api-ssl.bitly.com/v4/shorten'
 
     headers = {
@@ -47,12 +35,33 @@ def shorten_link(link):
         'long_url': link
     }
 
-    payload = json.dumps(payload)
-    response = requests.post(url, headers=headers, data=payload)
-    return response
+    try:
+
+        response = requests.post(url, headers=headers, json=payload)
+        response.raise_for_status()
+
+        if response.ok and 'bit.ly' in response.json()['id']:
+            result = f"Короткая ссылка: {response.json()['link']}"
+            return result
+
+        elif response.json()['errors'][0]['error_code'] == 'invalid':
+            result = f'Error: {response.json()["message"]}'
+            return result
+
+    except requests.exceptions.ConnectionError:
+        result = f'\nConnectionError occured'
+        return result
+
+    except requests.exceptions.HTTPError as err:
+        result = '\nHTTP Error occured. ' \
+                 '\nResponse is: {content}. ' \
+                 '\nStatus code: {status_code}'\
+            .format(content=err.response.content,
+                    status_code=err.response.status_code)
+        return result
 
 
-def count_clicks(bitlink):
+def count_clicks(bitlink, token):
     url_template = f'https://api-ssl.bitly.com/v4/bitlinks/' \
                    f'{bitlink}/clicks/summary?units=-1'
 
@@ -62,78 +71,44 @@ def count_clicks(bitlink):
         'Authorization': token
     }
 
-    response = requests.get(url, headers=headers)
-    return response
+    try:
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+
+        total_clicks = response.json()['total_clicks']
+        result = f'По вашей ссылке прошли {total_clicks} раз(а)'
+        return result
+
+    except requests.exceptions.ConnectionError:
+        result = f'\nConnectionError occured'
+        return result
+
+    except requests.exceptions.HTTPError as err:
+
+        result = '\nHTTP Error occured. ' \
+                 '\nResponse is: {content}. ' \
+                 '\nStatus code: {status_code}'\
+            .format(content=err.response.content,
+                    status_code=err.response.status_code)
+        return result
 
 
-def main(user_input):
+def main():
 
-    if user_input[0:5] == 'https':
-        is_bitly = user_input.startswith("bit.ly", 8, 14)
-        bitlink = user_input[8:]
-    elif user_input[0:4] == 'http':
-        is_bitly = user_input.startswith("bit.ly", 7, 13)
-        bitlink = user_input[7:]
-    else:
-        is_bitly = user_input.startswith("bit.ly")
-        bitlink = user_input
+    user_input = input('Введите ссылку: ')
+    token = return_token()
+    bitlink, is_bitly = return_bitly(user_input)
 
     if is_bitly:
 
-        try:
-            response = count_clicks(bitlink)
-            response.raise_for_status()
-            total_clicks = response.json()['total_clicks']
-            result = f'По вашей ссылке прошли {total_clicks} раз(а)'
-            print(result)
-            return result
-
-        except Exception as err:
-            print(f'Ошибка при загрузке страницы: {err}')
-
-        except requests.exceptions.ConnectionError:
-            print('\nConnectionError occured')
-
-        except requests.exceptions.HTTPError as err:
-            print('\nHTTP Error occured')
-            print('Response is: {content}'.format(
-                content=err.response.content))
-            print(err.response.status_code)
+        total_clicks = count_clicks(bitlink, token)
+        print(total_clicks)
 
     elif not is_bitly:
 
-        try:
-
-            response = requests.get(user_input)
-            response.raise_for_status()
-
-        except Exception as err:
-            print(f'Ошибка при загрузке страницы: {err}')
-
-        except requests.exceptions.ConnectionError:
-            print('\nConnectionError occured')
-
-        except requests.exceptions.HTTPError as err:
-            print('\nHTTP Error occured')
-            print('Response is: {content}'.format(
-                content=err.response.content))
-            print(err.response.status_code)
-
-        else:
-
-            bitlink = shorten_link(user_input)
-
-            if bitlink.ok is True and 'bit.ly' in bitlink.json()['id']:
-                result = f"Короткая ссылка: {bitlink.json()['link']}"
-                print(result)
-                return result
-
-            elif bitlink.json()['errors'][0]['error_code'] == 'invalid':
-                result = f'Error: {bitlink.json()["message"]}'
-                print(result)
-                return result
+        short_link = shorten_link(user_input, token)
+        print(short_link)
 
 
 if __name__ == "__main__":
-    user_input_url = str(input('Введите ссылку: '))
-    main(user_input_url)
+    main()
