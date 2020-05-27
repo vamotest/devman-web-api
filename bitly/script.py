@@ -2,14 +2,16 @@ import requests
 import yaml
 
 
-def return_token():
-    conf = yaml.safe_load(open('configuration.yml'))
-    token = conf['user']['token']
+def get_token():
+
+    with open('configuration.yml', 'r') as stream:
+        conf = yaml.safe_load(stream)
+        token = conf['user']['token']
 
     return token
 
 
-def return_bitly(user_input):
+def get_bitly(user_input):
     if user_input.startswith('https', 0, 5):
         is_bitly = user_input.startswith("bit.ly", 8, 14)
         bitlink = user_input[8:]
@@ -39,14 +41,13 @@ def shorten_link(link, token):
 
         response = requests.post(url, headers=headers, json=payload)
         response.raise_for_status()
+        response_json = response.json()
 
-        if response.ok and 'bit.ly' in response.json()['id']:
-            result = f"Короткая ссылка: {response.json()['link']}"
+        if response.ok and 'bit.ly' in response_json['id']:
+            result = f"Короткая ссылка: {response_json['link']}"
             return result
-
-        elif response.json()['errors'][0]['error_code'] == 'invalid':
-            result = f'Error: {response.json()["message"]}'
-            return result
+        else:
+            return
 
     except requests.exceptions.ConnectionError:
         result = f'\nConnectionError occured'
@@ -74,8 +75,9 @@ def count_clicks(bitlink, token):
     try:
         response = requests.get(url, headers=headers)
         response.raise_for_status()
+        response_json = response.json()
 
-        total_clicks = response.json()['total_clicks']
+        total_clicks = response_json['total_clicks']
         result = f'По вашей ссылке прошли {total_clicks} раз(а)'
         return result
 
@@ -84,7 +86,6 @@ def count_clicks(bitlink, token):
         return result
 
     except requests.exceptions.HTTPError as err:
-
         result = '\nHTTP Error occured. ' \
                  '\nResponse is: {content}. ' \
                  '\nStatus code: {status_code}'\
@@ -96,18 +97,24 @@ def count_clicks(bitlink, token):
 def main():
 
     user_input = input('Введите ссылку: ')
-    token = return_token()
-    bitlink, is_bitly = return_bitly(user_input)
 
-    if is_bitly:
+    try:
+        token = get_token()
+    except yaml.YAMLError as exc:
+        print(exc)
 
-        total_clicks = count_clicks(bitlink, token)
-        print(total_clicks)
+    else:
+        bitlink, is_bitly = get_bitly(user_input)
 
-    elif not is_bitly:
+        if is_bitly:
 
-        short_link = shorten_link(user_input, token)
-        print(short_link)
+            total_clicks = count_clicks(bitlink, token)
+            print(total_clicks)
+
+        elif not is_bitly:
+
+            short_link = shorten_link(user_input, token)
+            print(short_link)
 
 
 if __name__ == "__main__":
