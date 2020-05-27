@@ -37,29 +37,12 @@ def shorten_link(link, token):
         'long_url': link
     }
 
-    try:
+    response = requests.post(url, headers=headers, json=payload)
+    response.raise_for_status()
+    response_json = response.json()
 
-        response = requests.post(url, headers=headers, json=payload)
-        response.raise_for_status()
-        response_json = response.json()
-
-        if response.ok and 'bit.ly' in response_json['id']:
-            result = f"Короткая ссылка: {response_json['link']}"
-            return result
-        else:
-            return
-
-    except requests.exceptions.ConnectionError:
-        result = f'\nConnectionError occured'
-        return result
-
-    except requests.exceptions.HTTPError as err:
-        result = '\nHTTP Error occured. ' \
-                 '\nResponse is: {content}. ' \
-                 '\nStatus code: {status_code}'\
-            .format(content=err.response.content,
-                    status_code=err.response.status_code)
-        return result
+    result = f"Короткая ссылка: {response_json['link']}"
+    return result
 
 
 def count_clicks(bitlink, token):
@@ -72,26 +55,13 @@ def count_clicks(bitlink, token):
         'Authorization': token
     }
 
-    try:
-        response = requests.get(url, headers=headers)
-        response.raise_for_status()
-        response_json = response.json()
+    response = requests.get(url, headers=headers)
+    response.raise_for_status()
+    response_json = response.json()
 
-        total_clicks = response_json['total_clicks']
-        result = f'По вашей ссылке прошли {total_clicks} раз(а)'
-        return result
-
-    except requests.exceptions.ConnectionError:
-        result = f'\nConnectionError occured'
-        return result
-
-    except requests.exceptions.HTTPError as err:
-        result = '\nHTTP Error occured. ' \
-                 '\nResponse is: {content}. ' \
-                 '\nStatus code: {status_code}'\
-            .format(content=err.response.content,
-                    status_code=err.response.status_code)
-        return result
+    total_clicks = response_json['total_clicks']
+    result = f'По вашей ссылке прошли {total_clicks} раз(а)'
+    return result
 
 
 def main():
@@ -99,22 +69,34 @@ def main():
     user_input = input('Введите ссылку: ')
 
     try:
-        token = get_token()
-    except yaml.YAMLError as exc:
-        print(exc)
 
-    else:
+        token = get_token()
         bitlink, is_bitly = get_bitly(user_input)
 
         if is_bitly:
-
             total_clicks = count_clicks(bitlink, token)
             print(total_clicks)
 
         elif not is_bitly:
-
             short_link = shorten_link(user_input, token)
             print(short_link)
+
+    except FileNotFoundError as err:
+        print(err)
+
+    except yaml.YAMLError as err:
+        print(err)
+
+    except requests.exceptions.ConnectionError:
+        print(f'\nConnectionError occured')
+
+    except requests.exceptions.HTTPError as err:
+        response = '\nHTTP Error occured. ' \
+                   '\nResponse is: {content}. ' \
+                   '\nStatus code: {status_code}'\
+            .format(content=err.response.content,
+                    status_code=err.response.status_code)
+        print(response)
 
 
 if __name__ == "__main__":
