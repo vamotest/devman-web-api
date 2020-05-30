@@ -11,9 +11,10 @@ import pytest
 def test_shorten_link_positive(user_input):
 	token = get_token()
 	short_link = shorten_link(user_input, token)
-	print(short_link)
+	print(f'Короткая ссылка: {short_link}')
+	is_bitly = get_bitly(short_link)[1]
 
-	assert short_link.startswith('Короткая ссылка')
+	assert is_bitly
 
 
 @pytest.mark.parametrize('user_input', [
@@ -23,8 +24,10 @@ def test_shorten_link_negative(user_input):
 	token = get_token()
 
 	try:
-		response = shorten_link(user_input, token)
-		assert 'Not Found for url' in response
+		short_link = shorten_link(user_input, token)
+		is_bitly = get_bitly(short_link)[1]
+		assert not is_bitly
+
 	except requests.exceptions.HTTPError as err:
 		print(f'HTTP Error occured: {err}')
 
@@ -36,11 +39,10 @@ def test_shorten_link_negative(user_input):
 def test_count_clicks_positive(user_input):
 	token = get_token()
 	bitlink = get_bitly(user_input)[0]
-
 	total_clicks = count_clicks(bitlink, token)
-	print(total_clicks)
+	print(f'По вашей ссылке прошли {total_clicks} раз(а)')
 
-	assert total_clicks.startswith('По вашей ссылке прошли')
+	assert isinstance(total_clicks, int)
 
 
 @pytest.mark.parametrize('user_input', [
@@ -52,7 +54,8 @@ def test_count_clicks_negative(user_input):
 	bitlink = get_bitly(user_input)[0]
 
 	try:
-		response = count_clicks(bitlink, token)
-		assert 'Not Found for url' in response
+		total_clicks = count_clicks(bitlink, token)
+		assert not isinstance(total_clicks, int)
+
 	except requests.exceptions.HTTPError as err:
 		print(f'HTTP Error occured: {err}')

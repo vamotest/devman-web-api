@@ -39,10 +39,9 @@ def shorten_link(link, token):
 
     response = requests.post(url, headers=headers, json=payload)
     response.raise_for_status()
-    response_json = response.json()
+    response = response.json()
 
-    result = f"Короткая ссылка: {response_json['link']}"
-    return result
+    return response['link']
 
 
 def count_clicks(bitlink, token):
@@ -57,11 +56,10 @@ def count_clicks(bitlink, token):
 
     response = requests.get(url, headers=headers)
     response.raise_for_status()
-    response_json = response.json()
+    response = response.json()
 
-    total_clicks = response_json['total_clicks']
-    result = f'По вашей ссылке прошли {total_clicks} раз(а)'
-    return result
+    total_clicks = response['total_clicks']
+    return total_clicks
 
 
 def main():
@@ -75,11 +73,11 @@ def main():
 
         if is_bitly:
             total_clicks = count_clicks(bitlink, token)
-            print(total_clicks)
+            print(f'По вашей ссылке прошли {total_clicks} раз(а)')
 
         elif not is_bitly:
             short_link = shorten_link(user_input, token)
-            print(short_link)
+            print(f'Короткая ссылка: {short_link}')
 
     except FileNotFoundError as err:
         print(err)
