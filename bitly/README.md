@@ -27,7 +27,7 @@ user:
 ```
 * Запустите тесты:
 ```shell script
-~ python3 -m pytest test_script.py [--verbose] --html=report.html
+~ python3 -m pytest [--verbose] --html=report.html
 ```
 * Arguments:
 ```sh
