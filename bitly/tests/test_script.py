@@ -1,6 +1,6 @@
 import requests
 
-from .script import get_token, get_bitly, shorten_link, count_clicks
+from ..main import get_token, get_bitly, shorten_link, count_clicks
 import pytest
 
 
