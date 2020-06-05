@@ -1,5 +1,14 @@
+import argparse
 import requests
 import yaml
+
+
+def create_parser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('link', type=str,
+                        help='Enter a link to shorten or count clicks')
+
+    return parser
 
 
 def get_token():
@@ -64,20 +73,23 @@ def count_clicks(bitlink, token):
 
 def main():
 
-    user_input = input('Введите ссылку: ')
-
     try:
+
+        parser = create_parser()
+        namespace = parser.parse_args()
+
+        user_input = namespace.link
 
         token = get_token()
         bitlink, is_bitly = get_bitly(user_input)
 
         if is_bitly:
             total_clicks = count_clicks(bitlink, token)
-            print(f'По вашей ссылке прошли {total_clicks} раз(а)')
+            print(f'Followed your link {total_clicks} time(s)')
 
         elif not is_bitly:
             short_link = shorten_link(user_input, token)
-            print(f'Короткая ссылка: {short_link}')
+            print(f'Your short link: {short_link}')
 
     except FileNotFoundError as err:
         print(err)
