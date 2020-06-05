@@ -11,7 +11,7 @@ import pytest
 def test_shorten_link_positive(user_input):
 	token = get_token()
 	short_link = shorten_link(user_input, token)
-	print(f'Короткая ссылка: {short_link}')
+	print(f'Your short link: {short_link}')
 	is_bitly = get_bitly(short_link)[1]
 
 	assert is_bitly
@@ -40,7 +40,7 @@ def test_count_clicks_positive(user_input):
 	token = get_token()
 	bitlink = get_bitly(user_input)[0]
 	total_clicks = count_clicks(bitlink, token)
-	print(f'По вашей ссылке прошли {total_clicks} раз(а)')
+	print(f'Followed your link {total_clicks} time(s)')
 
 	assert isinstance(total_clicks, int)
 
