@@ -1,6 +1,8 @@
 # Загрузите в imgur фотографии космоса
 
-![Image](https://dvmn.org/media/lessons/space.jpg)
+
+<img src="https://dvmn.org/media/lessons/space.jpg" width="480" height="360">
+
 
 1. Автоматизируйте сбор фотографий космоса через API (`SpaceX` и `Hubble`)
 2. Напишите функцию для скачивания картинок любого формата
