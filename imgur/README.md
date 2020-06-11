@@ -33,7 +33,7 @@ imgur:
 ~ python3 main.py
 ```
 
-* Во время выполнения по полученной [ссылке](https://api.imgur.com/oauth2/authorize) получите PIN: 
+* Во время выполнения по [ссылке](https://api.imgur.com/oauth2/authorize) получите PIN и введите ниже: 
 ```
 Input pin: 
 ```
